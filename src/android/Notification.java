@@ -39,6 +39,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 /**
  * This class provides access to notifications on the device.
@@ -61,6 +64,7 @@ public class Notification extends CordovaPlugin {
     private static final String ACTION_PROGRESS_START = "progressStart";
     private static final String ACTION_PROGRESS_VALUE = "progressValue";
     private static final String ACTION_PROGRESS_STOP  = "progressStop";
+    private static final String ACTION_DIALOG_DISMISS_ALL ="dismissAll";
 
     private static final long BEEP_TIMEOUT   = 5000;
     private static final long BEEP_WAIT_TINE = 100;
@@ -68,6 +72,7 @@ public class Notification extends CordovaPlugin {
     public int confirmResult = -1;
     public ProgressDialog spinnerDialog = null;
     public ProgressDialog progressDialog = null;
+    public List<AlertDialog> dialogs = new ArrayList<AlertDialog>();
 
     /**
      * Constructor.
@@ -121,8 +126,9 @@ public class Notification extends CordovaPlugin {
         }
         else if (action.equals(ACTION_PROGRESS_STOP)) {
             this.progressStop();
-        }
-        else {
+        }else if (action.equals(ACTION_DIALOG_DISMISS_ALL)){
+            this.dismissAll();
+        }else {
             return false;
         }
 
@@ -493,6 +499,18 @@ public class Notification extends CordovaPlugin {
         }
     }
 
+    /**
+     * Dismiss dialog.
+     * Allow to programmatically dismiss all dialogs
+     */
+    public synchronized void dismissAll() {
+        if (!this.dialogs.isEmpty()) {
+            for (AlertDialog dialog : this.dialogs) {
+                dialog.dismiss();
+            }
+        }
+    }
+
     @SuppressLint("NewApi")
     private Builder createDialog(CordovaInterface cordova) {
         int currentapiVersion = android.os.Build.VERSION.SDK_INT;
@@ -518,6 +536,7 @@ public class Notification extends CordovaPlugin {
         int currentapiVersion = android.os.Build.VERSION.SDK_INT;
         dlg.create();
         AlertDialog dialog =  dlg.show();
+        this.dialogs.add(dialog);
         if (currentapiVersion >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR1) {
             TextView messageview = (TextView)dialog.findViewById(android.R.id.message);
             messageview.setTextDirection(android.view.View.TEXT_DIRECTION_LOCALE);
